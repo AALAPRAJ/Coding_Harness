@@ -1,2 +1,48 @@
-Coding_Harness_Documentation.docx
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# OS / Editor files
 .DS_Store
+*.pem
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+Coding_Harness_Documentation.docx
+
+# Temp / Scratch / Agent workspaces
+tmp/
+workspaces/
+scratch/
+
+# Coverage
+coverage/
+
+# Planning and Walkthrough artifacts
+IMPLEMENTATION_PLAN.md
+WALKTHROUGH.md

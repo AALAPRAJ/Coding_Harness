@@ -1,0 +1,28 @@
+{
+  "name": "coding-harness-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for Coding Harness - Autonomous AI Developer & Sandbox Execution Platform",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=shared && npm run build --workspace=backend",
+    "build:shared": "npm run build --workspace=shared",
+    "build:backend": "npm run build --workspace=backend",
+    "db:generate": "npm run db:generate --workspace=backend",
+    "db:migrate": "npm run db:migrate --workspace=backend",
+    "db:push": "npm run db:push --workspace=backend",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}

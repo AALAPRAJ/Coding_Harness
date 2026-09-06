@@ -1,0 +1,13 @@
+{
+  "name": "@coding-harness/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend Web Application for Coding Harness (Scaffolded for Phase 5)",
+  "scripts": {
+    "dev": "echo 'Frontend will be initialized in Phase 5 with Next.js'",
+    "build": "echo 'Frontend build placeholder'"
+  },
+  "dependencies": {
+    "@coding-harness/shared": "*"
+  }
+}

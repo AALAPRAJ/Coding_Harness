@@ -4,12 +4,14 @@
 > This master document outlines the full workflow, system architecture, technology stack, and a highly detailed phase-wise implementation plan for the **Coding Harness** project.
 
 ## 1. Project Overview & Objective
-**Coding Harness** is an automated platform where an AI agent acts as a controlled developer within an isolated environment. The main objective is for a user to submit a task and a repository, and the system autonomously produces a tested, working code change with full logs and a Git diff. 
+
+**Coding Harness** is an automated platform where an AI agent acts as a controlled developer within an isolated environment. The main objective is for a user to submit a task and a repository, and the system autonomously produces a tested, working code change with full logs and a Git diff.
 It differs from standard chatbots by actually executing plans—cloning repositories, running real commands and tests inside Docker, observing real output, and iterating until successful.
 
 ---
 
 ## 2. Complete Project Workflow
+
 The following represents the end-to-end lifecycle of a coding task within the harness:
 
 1. **User Task & Repository Input:** User submits a task description and a repository (URL or ZIP upload) via the Frontend.
@@ -31,18 +33,20 @@ The following represents the end-to-end lifecycle of a coding task within the ha
 ## 3. System Architecture & Technology Stack
 
 ### Overall Technology Stack
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | Next.js, TypeScript, Tailwind CSS | Web UI, task submission, live progress viewing |
-| **Backend** | Node.js (Express) | API server, orchestration, session management |
-| **AI** | OpenAI API / Gemini API | Coding agent reasoning and planning |
-| **Execution** | Docker Engine API | Isolated sandboxed code execution |
-| **Database** | PostgreSQL | Persistent data storage (users, tasks, sessions) |
-| **Queue** | Redis + BullMQ | Background job/task processing |
-| **Version Control**| Git + GitHub API | Cloning, diffing, branching |
-| **Auth** | JWT / OAuth | User authentication |
+
+| Layer               | Technology                        | Purpose                                          |
+| ------------------- | --------------------------------- | ------------------------------------------------ |
+| **Frontend**        | Next.js, TypeScript, Tailwind CSS | Web UI, task submission, live progress viewing   |
+| **Backend**         | Node.js (Express)                 | API server, orchestration, session management    |
+| **AI**              | OpenAI API / Gemini API           | Coding agent reasoning and planning              |
+| **Execution**       | Docker Engine API                 | Isolated sandboxed code execution                |
+| **Database**        | PostgreSQL                        | Persistent data storage (users, tasks, sessions) |
+| **Queue**           | Redis + BullMQ                    | Background job/task processing                   |
+| **Version Control** | Git + GitHub API                  | Cloning, diffing, branching                      |
+| **Auth**            | JWT / OAuth                       | User authentication                              |
 
 ### Security & Isolation
+
 - **Docker Sandboxing:** Code strictly runs inside containers, completely isolated from the host.
 - **Resource Limits:** CPU, memory, and execution-time limits prevent runaway processes.
 - **Restricted Permissions:** Containers run as non-root users.
@@ -56,6 +60,7 @@ The following represents the end-to-end lifecycle of a coding task within the ha
 The project will be built in **6 distinct phases**. Each phase is detailed with specific tasks, dependencies, and deliverables.
 
 ### Phase 1: Foundation & Project Setup
+
 **Objective:** Initialize the project monorepo structure, set up the database schema, and create the basic server skeleton.
 
 - **Tech Stack & Libraries:** Node.js, Express, TypeScript, PostgreSQL, Prisma (ORM), `dotenv`, `cors`, `helmet`.
@@ -100,6 +105,7 @@ The project will be built in **6 distinct phases**. Each phase is detailed with 
   ```
 
 ### Phase 2: Core Backend, Git Manager & Queue System
+
 **Objective:** Build task orchestration, handle asynchronous background jobs, and manage Git operations like cloning and diffing.
 
 - **Tech Stack & Libraries:** Redis, BullMQ, Node.js `child_process`, `simple-git`, `jsonwebtoken`, `bcrypt`.
@@ -139,6 +145,7 @@ The project will be built in **6 distinct phases**. Each phase is detailed with 
   ```
 
 ### Phase 3: Tool Execution Layer & Docker Sandbox
+
 **Objective:** Create a secure, isolated environment for code execution and expose safe tools for the AI agent to interact with the codebase.
 
 - **Tech Stack & Libraries:** `dockerode` (Docker API for Node.js), shell scripting, Node.js `fs/promises`.
@@ -157,7 +164,7 @@ The project will be built in **6 distinct phases**. Each phase is detailed with 
        - `list_dir(path)`
        - `grep_search(query, path)`
   3. **Docker Command Routing (`commandRunner.ts`):**
-     - Implement `run_command(cmd)`: This tool specifically routes commands (like `npm test`, `tsc`, `python script.py`) to execute *inside* the active Docker sandbox via `docker exec`.
+     - Implement `run_command(cmd)`: This tool specifically routes commands (like `npm test`, `tsc`, `python script.py`) to execute _inside_ the active Docker sandbox via `docker exec`.
      - Capture `stdout` and `stderr` streams and return them.
      - Enforce timeouts (e.g., kill command if it runs > 60s).
 
@@ -174,6 +181,7 @@ The project will be built in **6 distinct phases**. Each phase is detailed with 
   ```
 
 ### Phase 4: AI Agent Orchestration & Iteration Loop
+
 **Objective:** Integrate the LLM, provide it with the defined tools, and implement the autonomous loop of planning, executing, and testing.
 
 - **Tech Stack & Libraries:** `@langchain/openai`, `openai` SDK, structured output parsers.
@@ -204,6 +212,7 @@ The project will be built in **6 distinct phases**. Each phase is detailed with 
   ```
 
 ### Phase 5: Frontend Interface
+
 **Objective:** Build a responsive, real-time web interface for users to submit tasks and monitor the agent's progress.
 
 - **Tech Stack & Libraries:** Next.js, React, Tailwind CSS, `socket.io-client`, `react-diff-viewer`, `lucide-react` (icons).
@@ -239,6 +248,7 @@ The project will be built in **6 distinct phases**. Each phase is detailed with 
   ```
 
 ### Phase 6: Testing, Security Hardening & Deployment
+
 **Objective:** Ensure the system is robust, secure, and ready for production deployment.
 
 - **Tech Stack & Libraries:** Jest, Supertest, GitHub Actions, Docker, Nginx/Traefik.
