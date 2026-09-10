@@ -11,7 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "clean": "rm -rf dist"
+    "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
     "@coding-harness/shared": "*",

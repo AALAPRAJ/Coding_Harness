@@ -104,3 +104,27 @@ export interface HealthCheckResponse {
     heapUsed: string;
   };
 }
+
+/**
+ * Payload required to register a new user.
+ */
+export interface RegisterUserInput {
+  email: string;
+  password: string;
+}
+
+/**
+ * Payload required to authenticate an existing user.
+ */
+export interface LoginUserInput {
+  email: string;
+  password: string;
+}
+
+/**
+ * Authentication response containing user session and JWT token.
+ */
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
