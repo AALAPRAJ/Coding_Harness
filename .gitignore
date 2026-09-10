@@ -46,3 +46,4 @@ coverage/
 # Planning and Walkthrough artifacts
 IMPLEMENTATION_PLAN.md
 WALKTHROUGH.md
+/docslocal
