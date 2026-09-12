@@ -19,7 +19,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "test": "npm run test --workspace=backend",
+    "test:backend": "npm run test --workspace=backend",
+    "test:db": "npm run test:db --workspace=backend",
+    "test:api": "npm run test:api --workspace=backend",
+    "test:env": "npm run test:env --workspace=backend"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

@@ -11,7 +11,11 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\""
+    "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
+    "test": "tsx tests/run-all.ts",
+    "test:db": "tsx tests/db.test.ts",
+    "test:api": "tsx tests/api.test.ts",
+    "test:env": "tsx tests/env.debug.ts"
   },
   "dependencies": {
     "@coding-harness/shared": "*",
