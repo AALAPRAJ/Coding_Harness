@@ -4,6 +4,7 @@ import { TASK_QUEUE_NAME, redisConnectionOptions } from './queue';
 import { prisma } from '../db/client';
 import { GitService } from '../services/gitService';
 import { StorageService } from '../services/storageService';
+import { DockerManager } from '../sandbox/dockerManager';
 import { logger } from '../logger';
 
 /**
@@ -67,30 +68,59 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
       throw new Error('Neither a repoUrl nor a zipFilePath was provided for this task.');
     }
 
-    // 5. Workspace is ready for AI Agent & Docker Sandbox (Phase 3 & 4 execution hook)
-    await appendLogs('Workspace prepared and ready for Agent execution layer.');
+    // 5. Docker Sandbox Container lifecycle (Phase 3 Tool Execution Layer)
+    let containerInfo: { containerId: string } | null = null;
+    try {
+      const dockerStatus = await DockerManager.checkDockerConnection();
+      if (dockerStatus.connected) {
+        await appendLogs(
+          `Docker daemon connected (v${dockerStatus.version || 'unknown'}). Spinning up isolated sandbox container...`,
+        );
+        containerInfo = await DockerManager.createAndStartContainer(taskId, workspacePath);
+        await appendLogs(
+          `Docker sandbox container initialized: ${containerInfo.containerId.substring(0, 12)}`,
+        );
+      } else {
+        await appendLogs(
+          `Notice: Docker daemon unreachable (${dockerStatus.message}). Running in container-less filesystem mode.`,
+        );
+      }
 
-    // 6. Capture baseline or final diff
-    const diff = await GitService.getGitDiff(workspacePath);
+      // 6. Workspace & Tool Layer is ready for AI Agent (Phase 4 execution hook)
+      await appendLogs(
+        'Tool Execution Registry and workspace environment ready for Agent reasoning loop.',
+      );
 
-    // 7. Mark session and task as COMPLETED
-    const finishTime = new Date();
-    await appendLogs('Task execution phase completed successfully.');
+      // 7. Capture baseline or final diff
+      const diff = await GitService.getGitDiff(workspacePath);
 
-    await prisma.session.update({
-      where: { id: session.id },
-      data: {
-        resultDiff: diff || null,
-        finishedAt: finishTime,
-      },
-    });
+      // 8. Mark session and task as COMPLETED
+      const finishTime = new Date();
+      await appendLogs('Task execution phase completed successfully.');
 
-    await prisma.task.update({
-      where: { id: taskId },
-      data: { status: TaskStatus.COMPLETED },
-    });
+      await prisma.session.update({
+        where: { id: session.id },
+        data: {
+          resultDiff: diff || null,
+          finishedAt: finishTime,
+        },
+      });
 
-    logger.info(`Task ${taskId} completed successfully`);
+      await prisma.task.update({
+        where: { id: taskId },
+        data: { status: TaskStatus.COMPLETED },
+      });
+
+      logger.info(`Task ${taskId} completed successfully`);
+    } finally {
+      // Ensure sandbox container is cleanly destroyed after task completion or failure
+      if (containerInfo?.containerId) {
+        await appendLogs(
+          `Cleaning up sandbox container ${containerInfo.containerId.substring(0, 12)}...`,
+        );
+        await DockerManager.stopAndRemoveContainer(containerInfo.containerId);
+      }
+    }
   } catch (error) {
     const err = error as Error;
     const finishTime = new Date();

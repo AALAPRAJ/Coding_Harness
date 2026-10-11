@@ -5,6 +5,7 @@ import { logger } from './logger';
 import { prisma } from './db/client';
 import { startTaskWorker, stopTaskWorker } from './jobs/taskWorker';
 import { closeQueue } from './jobs/queue';
+import { DockerManager } from './sandbox/dockerManager';
 
 const app = createApp();
 const server = http.createServer(app);
@@ -28,8 +29,9 @@ async function handleShutdown(signal: string) {
     try {
       await stopTaskWorker();
       await closeQueue();
+      await DockerManager.cleanupAllManagedContainers();
       await prisma.$disconnect();
-      logger.info('Background worker, queue, and database disconnected.');
+      logger.info('Background worker, queue, sandbox containers, and database disconnected.');
     } catch (err) {
       logger.error('Error during shutdown cleanup:', err);
     }

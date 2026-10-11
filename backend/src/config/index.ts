@@ -18,6 +18,11 @@ export interface AppConfig {
   jwtExpiresIn: string;
   workspacesDir: string;
   uploadsDir: string;
+  dockerSocketPath?: string;
+  sandboxImage: string;
+  sandboxMemoryLimit: number;
+  sandboxNanoCpus: number;
+  commandTimeoutMs: number;
 }
 
 export const config: AppConfig = {
@@ -39,4 +44,9 @@ export const config: AppConfig = {
     path.resolve(process.env.TMPDIR || '/tmp', 'coding-harness/workspaces'),
   uploadsDir:
     process.env.UPLOADS_DIR || path.resolve(process.env.TMPDIR || '/tmp', 'coding-harness/uploads'),
+  dockerSocketPath: process.env.DOCKER_SOCKET_PATH || undefined,
+  sandboxImage: process.env.SANDBOX_IMAGE || 'node:18-alpine',
+  sandboxMemoryLimit: parseInt(process.env.SANDBOX_MEMORY_LIMIT || `${512 * 1024 * 1024}`, 10),
+  sandboxNanoCpus: parseInt(process.env.SANDBOX_NANOCPUS || `${1 * 1000000000}`, 10),
+  commandTimeoutMs: parseInt(process.env.COMMAND_TIMEOUT_MS || '60000', 10),
 };

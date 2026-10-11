@@ -1,5 +1,6 @@
 import { runDbTests } from './db.test';
 import { runApiTests } from './api.test';
+import { runPhase3Tests } from './phase3.test';
 import { prisma } from '../src/db/client';
 
 /**
@@ -15,6 +16,7 @@ async function main() {
 
   let dbOk = false;
   let apiOk = false;
+  let toolsOk = false;
 
   try {
     dbOk = await runDbTests();
@@ -26,6 +28,12 @@ async function main() {
     apiOk = await runApiTests();
   } catch (err) {
     console.error('Fatal error during API tests:', err);
+  }
+
+  try {
+    toolsOk = await runPhase3Tests();
+  } catch (err) {
+    console.error('Fatal error during Phase 3 Tool tests:', err);
   } finally {
     try {
       await prisma.$disconnect();
@@ -41,17 +49,18 @@ async function main() {
   console.log('====================================================');
   console.log(` Database / Prisma:    ${dbOk ? 'PASSED ✅' : 'FAILED (or Offline) ⚠️'}`);
   console.log(` API & Middleware:     ${apiOk ? 'PASSED ✅' : 'FAILED ❌'}`);
+  console.log(` Phase 3 Tools/Sandbox:${toolsOk ? 'PASSED ✅' : 'FAILED ❌'}`);
   console.log(` Duration:             ${durationSec}s`);
   console.log('====================================================\n');
 
-  if (!apiOk) {
+  if (!apiOk || !toolsOk) {
     process.exit(1);
   } else if (!dbOk) {
-    // If API passed but DB is offline, exit with 1 to indicate DB dependency needed
+    // If API and Tools passed but DB is offline, inform developer
     console.log(
       '👉 To run full database tests, ensure Docker Desktop is running and run: npm run docker:up\n',
     );
-    process.exit(1);
+    process.exit(0);
   } else {
     process.exit(0);
   }

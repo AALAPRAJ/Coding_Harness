@@ -2,17 +2,19 @@ import { Request, Response } from 'express';
 import { ApiResponse, HealthCheckResponse } from '@coding-harness/shared';
 import { checkDatabaseConnection } from '../db/client';
 import { checkRedisConnection } from '../jobs/queue';
+import { DockerManager } from '../sandbox/dockerManager';
 import { config } from '../config';
 
 const startTime = Date.now();
 
 /**
- * Health check handler returning system metrics, uptime, database, and Redis states.
+ * Health check handler returning system metrics, uptime, database, Redis, and Docker states.
  */
 export async function getHealthStatus(_req: Request, res: Response): Promise<void> {
-  const [dbHealth, redisHealth] = await Promise.all([
+  const [dbHealth, redisHealth, dockerHealth] = await Promise.all([
     checkDatabaseConnection(),
     checkRedisConnection(),
+    DockerManager.checkDockerConnection(),
   ]);
   const memoryUsage = process.memoryUsage();
 
@@ -29,6 +31,7 @@ export async function getHealthStatus(_req: Request, res: Response): Promise<voi
     environment: config.nodeEnv,
     database: dbHealth,
     redis: redisHealth,
+    docker: dockerHealth,
     memory: {
       rss: toMB(memoryUsage.rss),
       heapTotal: toMB(memoryUsage.heapTotal),

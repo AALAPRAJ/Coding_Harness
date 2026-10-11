@@ -24,6 +24,7 @@
     "test:backend": "npm run test --workspace=backend",
     "test:db": "npm run test:db --workspace=backend",
     "test:api": "npm run test:api --workspace=backend",
+    "test:phase3": "npm run test:phase3 --workspace=backend",
     "test:env": "npm run test:env --workspace=backend"
   },
   "devDependencies": {

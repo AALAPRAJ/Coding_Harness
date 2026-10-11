@@ -103,6 +103,12 @@ export interface HealthCheckResponse {
     latencyMs?: number;
     message?: string;
   };
+  docker?: {
+    connected: boolean;
+    version?: string;
+    latencyMs?: number;
+    message?: string;
+  };
   memory: {
     rss: string;
     heapTotal: string;
@@ -151,4 +157,106 @@ export interface TaskJobData {
  */
 export interface TaskWithSessions extends Task {
   sessions: Session[];
+}
+
+/**
+ * Supported execution tools for the AI agent in Phase 3 & 4.
+ */
+export enum ToolName {
+  VIEW_FILE = 'view_file',
+  WRITE_FILE = 'write_file',
+  REPLACE_FILE_CONTENT = 'replace_file_content',
+  LIST_DIR = 'list_dir',
+  GREP_SEARCH = 'grep_search',
+  RUN_COMMAND = 'run_command',
+}
+
+/**
+ * Parameter interface for view_file tool.
+ */
+export interface ViewFileInput {
+  path: string;
+  startLine?: number;
+  endLine?: number;
+}
+
+/**
+ * Parameter interface for write_file tool.
+ */
+export interface WriteFileInput {
+  path: string;
+  content: string;
+}
+
+/**
+ * Parameter interface for replace_file_content tool.
+ */
+export interface ReplaceFileContentInput {
+  path: string;
+  targetContent: string;
+  replacementContent: string;
+}
+
+/**
+ * Parameter interface for list_dir tool.
+ */
+export interface ListDirInput {
+  path?: string;
+  recursive?: boolean;
+  maxDepth?: number;
+}
+
+/**
+ * Parameter interface for grep_search tool.
+ */
+export interface GrepSearchInput {
+  query: string;
+  path?: string;
+  caseInsensitive?: boolean;
+  isRegex?: boolean;
+}
+
+/**
+ * Parameter interface for run_command tool.
+ */
+export interface RunCommandInput {
+  command: string;
+  timeoutMs?: number;
+  workingDir?: string;
+}
+
+/**
+ * Standardized execution result returned by all tools.
+ */
+export interface ToolResult<T = unknown> {
+  toolName: string;
+  success: boolean;
+  output?: T;
+  error?: string;
+  executionTimeMs: number;
+}
+
+/**
+ * Tool definition contract for LLM function calling registry.
+ */
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+/**
+ * Sandbox container runtime status metadata.
+ */
+export interface SandboxContainerInfo {
+  containerId: string;
+  taskId: string;
+  image: string;
+  workspacePath: string;
+  status: 'running' | 'stopped' | 'error';
+  createdAt: string;
 }

@@ -50,38 +50,62 @@ export async function runApiTests(): Promise<boolean> {
     assert.strictEqual(apiHealthBody.success, true);
     console.log(`✓ OK (Status: ${apiHealthRes.status})`);
 
-    // 3. POST /api/auth/register
-    process.stdout.write('⏳ Testing POST /api/auth/register... ');
-    const registerRes = await fetch(`${baseUrl}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'developer@example.com', password: 'secretpassword' }),
-    });
-    assert.strictEqual(registerRes.status, 200, 'Expected 200 OK');
-    const registerBody = (await registerRes.json()) as any;
-    assert.strictEqual(registerBody.success, true);
-    assert.strictEqual(registerBody.data.email, 'developer@example.com');
-    console.log(`✓ OK (Status: ${registerRes.status})`);
+    const isDbConnected = healthBody.data.database?.connected === true;
 
-    // 4. POST /api/auth/login
-    process.stdout.write('⏳ Testing POST /api/auth/login... ');
-    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'developer@example.com', password: 'secretpassword' }),
-    });
-    assert.strictEqual(loginRes.status, 200, 'Expected 200 OK');
-    const loginBody = (await loginRes.json()) as any;
-    assert.strictEqual(loginBody.success, true);
-    console.log(`✓ OK (Status: ${loginRes.status})`);
+    if (isDbConnected) {
+      // 3. POST /api/auth/register (requires DB)
+      process.stdout.write('⏳ Testing POST /api/auth/register... ');
+      const testEmail = `dev-${Date.now()}@example.com`;
+      const registerRes = await fetch(`${baseUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: testEmail, password: 'secretpassword' }),
+      });
+      assert.strictEqual(registerRes.status, 201, 'Expected 201 Created');
+      const registerBody = (await registerRes.json()) as any;
+      assert.strictEqual(registerBody.success, true);
+      assert.strictEqual(registerBody.data.user.email, testEmail);
+      console.log(`✓ OK (Status: ${registerRes.status})`);
 
-    // 5. GET /api/auth/me
-    process.stdout.write('⏳ Testing GET /api/auth/me... ');
-    const meRes = await fetch(`${baseUrl}/api/auth/me`);
-    assert.strictEqual(meRes.status, 200, 'Expected 200 OK');
-    const meBody = (await meRes.json()) as any;
-    assert.strictEqual(meBody.success, true);
-    console.log(`✓ OK (Status: ${meRes.status})`);
+      // 4. POST /api/auth/login (requires DB)
+      process.stdout.write('⏳ Testing POST /api/auth/login... ');
+      const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: testEmail, password: 'secretpassword' }),
+      });
+      assert.strictEqual(loginRes.status, 200, 'Expected 200 OK');
+      const loginBody = (await loginRes.json()) as any;
+      assert.strictEqual(loginBody.success, true);
+      assert.ok(loginBody.data.token, 'Expected JWT token');
+      console.log(`✓ OK (Status: ${loginRes.status})`);
+
+      // 5. GET /api/auth/me (with JWT token)
+      process.stdout.write('⏳ Testing GET /api/auth/me... ');
+      const meRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${loginBody.data.token}` },
+      });
+      assert.strictEqual(meRes.status, 200, 'Expected 200 OK');
+      const meBody = (await meRes.json()) as any;
+      assert.strictEqual(meBody.success, true);
+      assert.strictEqual(meBody.data.user.email, testEmail);
+      console.log(`✓ OK (Status: ${meRes.status})`);
+    } else {
+      // Test input validation when DB is offline (does not require DB connection)
+      process.stdout.write('⏳ Testing POST /api/auth/register (validation check)... ');
+      const invalidRegisterRes = await fetch(`${baseUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'not-an-email', password: 'short' }),
+      });
+      assert.strictEqual(invalidRegisterRes.status, 400, 'Expected 400 Bad Request');
+      console.log('✓ OK (Validation caught invalid input without DB)');
+
+      process.stdout.write('⏳ Testing GET /api/auth/me (unauthorized check)... ');
+      const unauthMeRes = await fetch(`${baseUrl}/api/auth/me`);
+      assert.strictEqual(unauthMeRes.status, 401, 'Expected 401 Unauthorized');
+      console.log('✓ OK (Auth middleware caught unauthenticated request)');
+    }
 
     // 6. 404 Fallback Handler
     process.stdout.write('⏳ Testing 404 Handler (GET /api/non-existent)... ');
