@@ -5,6 +5,7 @@ import { prisma } from '../db/client';
 import { GitService } from '../services/gitService';
 import { StorageService } from '../services/storageService';
 import { DockerManager } from '../sandbox/dockerManager';
+import { AgentLoop } from '../agent/agentLoop';
 import { logger } from '../logger';
 
 /**
@@ -86,13 +87,28 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
         );
       }
 
-      // 6. Workspace & Tool Layer is ready for AI Agent (Phase 4 execution hook)
+      // 6. AI Agent Autonomous Execution Loop (Phase 4)
+      await appendLogs('Starting autonomous AI Agent reasoning and tool execution loop...');
+      const agentResult = await AgentLoop.run({
+        taskId,
+        workspacePath,
+        prompt,
+        containerId: containerInfo?.containerId,
+        onProgress: async (logLine) => {
+          await appendLogs(logLine);
+        },
+      });
+
+      if (!agentResult.success && agentResult.error) {
+        throw new Error(`AI Agent execution halted with error: ${agentResult.error}`);
+      }
+
       await appendLogs(
-        'Tool Execution Registry and workspace environment ready for Agent reasoning loop.',
+        `Agent loop finished successfully in ${agentResult.iterations} iteration(s) with ${agentResult.totalToolCalls} tool execution(s).`,
       );
 
-      // 7. Capture baseline or final diff
-      const diff = await GitService.getGitDiff(workspacePath);
+      // 7. Capture final diff
+      const diff = agentResult.finalDiff || (await GitService.getGitDiff(workspacePath));
 
       // 8. Mark session and task as COMPLETED
       const finishTime = new Date();

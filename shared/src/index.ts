@@ -260,3 +260,40 @@ export interface SandboxContainerInfo {
   status: 'running' | 'stopped' | 'error';
   createdAt: string;
 }
+
+/**
+ * Agent execution step action type.
+ */
+export enum AgentActionType {
+  ANALYZE = 'ANALYZE',
+  PLAN = 'PLAN',
+  TOOL_CALL = 'TOOL_CALL',
+  VERIFY = 'VERIFY',
+  FINISH = 'FINISH',
+  ERROR = 'ERROR',
+}
+
+/**
+ * Logged agent step during the iteration loop.
+ */
+export interface AgentStepLog {
+  step: number;
+  action: AgentActionType;
+  thought?: string;
+  toolName?: string;
+  toolArgs?: Record<string, unknown>;
+  toolResult?: ToolResult;
+  timestamp: string;
+}
+
+/**
+ * Result of the AI agent iteration loop.
+ */
+export interface AgentLoopResult {
+  success: boolean;
+  iterations: number;
+  totalToolCalls: number;
+  steps: AgentStepLog[];
+  finalDiff?: string;
+  error?: string;
+}

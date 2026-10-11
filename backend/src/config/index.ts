@@ -23,6 +23,12 @@ export interface AppConfig {
   sandboxMemoryLimit: number;
   sandboxNanoCpus: number;
   commandTimeoutMs: number;
+  aiProvider: string;
+  aiApiKey: string;
+  aiBaseUrl?: string;
+  aiModel: string;
+  agentMaxIterations: number;
+  agentTemperature: number;
 }
 
 export const config: AppConfig = {
@@ -49,4 +55,10 @@ export const config: AppConfig = {
   sandboxMemoryLimit: parseInt(process.env.SANDBOX_MEMORY_LIMIT || `${512 * 1024 * 1024}`, 10),
   sandboxNanoCpus: parseInt(process.env.SANDBOX_NANOCPUS || `${1 * 1000000000}`, 10),
   commandTimeoutMs: parseInt(process.env.COMMAND_TIMEOUT_MS || '60000', 10),
+  aiProvider: process.env.AI_PROVIDER || 'openai',
+  aiApiKey: process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '',
+  aiBaseUrl: process.env.AI_BASE_URL || undefined,
+  aiModel: process.env.AI_MODEL || 'gpt-4o-mini',
+  agentMaxIterations: parseInt(process.env.AGENT_MAX_ITERATIONS || '10', 10),
+  agentTemperature: parseFloat(process.env.AGENT_TEMPERATURE || '0.2'),
 };

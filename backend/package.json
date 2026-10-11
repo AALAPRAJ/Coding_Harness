@@ -16,6 +16,7 @@
     "test:db": "tsx tests/db.test.ts",
     "test:api": "tsx tests/api.test.ts",
     "test:phase3": "tsx tests/phase3.test.ts",
+    "test:phase4": "tsx tests/phase4.test.ts",
     "test:env": "tsx tests/env.debug.ts"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
+    "openai": "^7.32.0",
     "simple-git": "^4.0.2",
     "unzipper": "^0.12.5",
     "winston": "^3.15.0"
