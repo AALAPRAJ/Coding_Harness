@@ -8,6 +8,8 @@ import { DockerManager } from '../sandbox/dockerManager';
 import { AgentLoop } from '../agent/agentLoop';
 import { logger } from '../logger';
 
+import { SocketServer } from '../websocket/socketServer';
+
 /**
  * Executes a single coding task job.
  * Manages task workspace setup, repo cloning/extraction, and database status transitions.
@@ -18,11 +20,12 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
 
   logger.info(`Processing task job ${job.id} for task ${taskId}`);
 
-  // 1. Update Task status to RUNNING in database
+  // 1. Update Task status to RUNNING in database and notify WebSocket clients
   await prisma.task.update({
     where: { id: taskId },
     data: { status: TaskStatus.RUNNING },
   });
+  SocketServer.emitTaskStatus(taskId, TaskStatus.RUNNING);
 
   // 2. Initialize a Session record to store streaming execution logs
   let session = await prisma.session.create({
@@ -37,6 +40,7 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
     const timestamp = new Date().toISOString();
     const entry = `[${timestamp}] ${logLine}\n`;
     logger.info(`[Task ${taskId}] ${logLine}`);
+    SocketServer.emitTaskLog(taskId, logLine);
     session = await prisma.session.update({
       where: { id: session.id },
       data: {
@@ -94,8 +98,11 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
         workspacePath,
         prompt,
         containerId: containerInfo?.containerId,
-        onProgress: async (logLine) => {
+        onProgress: async (logLine, stepLog) => {
           await appendLogs(logLine);
+          if (stepLog) {
+            SocketServer.emitTaskStep(taskId, stepLog);
+          }
         },
       });
 
@@ -109,6 +116,9 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
 
       // 7. Capture final diff
       const diff = agentResult.finalDiff || (await GitService.getGitDiff(workspacePath));
+      if (diff) {
+        SocketServer.emitTaskDiff(taskId, diff);
+      }
 
       // 8. Mark session and task as COMPLETED
       const finishTime = new Date();
@@ -126,6 +136,7 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
         where: { id: taskId },
         data: { status: TaskStatus.COMPLETED },
       });
+      SocketServer.emitTaskStatus(taskId, TaskStatus.COMPLETED);
 
       logger.info(`Task ${taskId} completed successfully`);
     } finally {
@@ -153,6 +164,7 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
       where: { id: taskId },
       data: { status: TaskStatus.FAILED },
     });
+    SocketServer.emitTaskStatus(taskId, TaskStatus.FAILED);
 
     logger.error(`Task ${taskId} failed:`, err);
     throw error;
