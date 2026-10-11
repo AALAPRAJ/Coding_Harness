@@ -22,6 +22,34 @@ export class CommandRunner {
       throw new AppError('Command string cannot be empty', 400, 'INVALID_COMMAND');
     }
 
+    // Security sanitization: prevent null-byte injection and destructive host/system attacks
+    if (command.includes('\0')) {
+      throw new AppError(
+        'Null-byte injection detected in command string',
+        400,
+        'SECURITY_VIOLATION',
+      );
+    }
+
+    const dangerousPatterns = [
+      /\brm\s+-rf\s+\/(?:\s|$|\*)/, // rm -rf /
+      /\bchmod\s+.*\/etc\//,
+      /\bmount\b/,
+      /\bumount\b/,
+      /\bchroot\b/,
+    ];
+
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(command)) {
+        logger.error(`Blocked potentially destructive command pattern: "${command}"`);
+        throw new AppError(
+          `Command rejected by sandbox security policy: matched dangerous pattern`,
+          400,
+          'SECURITY_VIOLATION',
+        );
+      }
+    }
+
     if (!containerId || typeof containerId !== 'string') {
       throw new AppError(
         'Active Docker sandbox containerId is required to run commands',

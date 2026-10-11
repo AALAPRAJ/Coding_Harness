@@ -1,0 +1,46 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build, Typecheck, and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Verify Code Formatting (Prettier)
+        run: npm run format:check
+
+      - name: Build Shared Types Package
+        run: npm run build:shared
+
+      - name: Build & Typecheck Backend
+        run: npm run build:backend
+
+      - name: Build & Prerender Frontend
+        run: npm run build:frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_WS_URL: http://localhost:4000
+
+      - name: Run Backend Diagnostic & Agent Tests
+        run: npm run test:backend
+        env:
+          NODE_ENV: test
+          AI_PROVIDER: mock

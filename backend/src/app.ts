@@ -7,6 +7,8 @@ import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { apiRouter } from './routes';
 import { getHealthStatus } from './controllers/healthController';
 
+import { globalApiLimiter } from './middlewares/rateLimiter';
+
 export function createApp(): Application {
   const app = express();
 
@@ -31,8 +33,8 @@ export function createApp(): Application {
   // Direct root health endpoint (convenience for load balancers & pingers)
   app.get('/health', getHealthStatus);
 
-  // Mount API versioned router
-  app.use('/api', apiRouter);
+  // Mount API versioned router with global rate limiting
+  app.use('/api', globalApiLimiter, apiRouter);
 
   // Fallback 404 handler
   app.use(notFoundHandler);

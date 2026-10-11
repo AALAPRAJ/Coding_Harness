@@ -2,6 +2,7 @@ import { runDbTests } from './db.test';
 import { runApiTests } from './api.test';
 import { runPhase3Tests } from './phase3.test';
 import { runPhase4Tests } from './phase4.test';
+import { runPhase6Tests } from './phase6.test';
 import { prisma } from '../src/db/client';
 
 /**
@@ -19,6 +20,7 @@ async function main() {
   let apiOk = false;
   let toolsOk = false;
   let agentOk = false;
+  let phase6Ok = false;
 
   try {
     dbOk = await runDbTests();
@@ -42,6 +44,12 @@ async function main() {
     agentOk = await runPhase4Tests();
   } catch (err) {
     console.error('Fatal error during Phase 4 Agent tests:', err);
+  }
+
+  try {
+    phase6Ok = await runPhase6Tests();
+  } catch (err) {
+    console.error('Fatal error during Phase 6 Security & Deployment tests:', err);
   } finally {
     try {
       await prisma.$disconnect();
@@ -59,10 +67,11 @@ async function main() {
   console.log(` API & Middleware:     ${apiOk ? 'PASSED ✅' : 'FAILED ❌'}`);
   console.log(` Phase 3 Tools/Sandbox:${toolsOk ? 'PASSED ✅' : 'FAILED ❌'}`);
   console.log(` Phase 4 AI Agent Loop:${agentOk ? 'PASSED ✅' : 'FAILED ❌'}`);
+  console.log(` Phase 6 Security & CI:${phase6Ok ? 'PASSED ✅' : 'FAILED ❌'}`);
   console.log(` Duration:             ${durationSec}s`);
   console.log('====================================================\n');
 
-  if (!apiOk || !toolsOk || !agentOk) {
+  if (!apiOk || !toolsOk || !agentOk || !phase6Ok) {
     process.exit(1);
   } else if (!dbOk) {
     // If API, Tools and Agent passed but DB is offline, inform developer

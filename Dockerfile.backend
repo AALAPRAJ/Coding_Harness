@@ -1,0 +1,62 @@
+# ==========================================
+# Coding Harness Backend - Production Image
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+# Copy package manifests
+COPY package.json package-lock.json ./
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+
+# Install all dependencies across workspaces
+RUN npm ci
+
+# Copy source trees
+COPY shared ./shared
+COPY backend ./backend
+
+# Build shared package declarations and generate Prisma client
+RUN npm run build:shared
+RUN npm run db:generate --workspace=backend
+
+# Build backend production JavaScript
+RUN npm run build:backend
+
+# ------------------------------------------
+# Production Runner
+# ------------------------------------------
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Install Docker CLI and Git for sandboxing and repository operations
+RUN apk add --no-cache docker-cli git
+
+# Copy root package files
+COPY package.json package-lock.json ./
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+
+# Install production dependencies only
+RUN npm ci --omit=dev
+
+# Copy generated prisma client and builds from builder stage
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/shared/dist ./shared/dist
+COPY --from=builder /app/backend/dist ./backend/dist
+COPY --from=builder /app/backend/prisma ./backend/prisma
+
+EXPOSE 4000
+
+WORKDIR /app/backend
+CMD ["node", "dist/server.js"]

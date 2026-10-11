@@ -17,6 +17,7 @@
     "test:api": "tsx tests/api.test.ts",
     "test:phase3": "tsx tests/phase3.test.ts",
     "test:phase4": "tsx tests/phase4.test.ts",
+    "test:phase6": "tsx tests/phase6.test.ts",
     "test:env": "tsx tests/env.debug.ts"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "dockerode": "^5.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.7.1",
     "helmet": "^8.0.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
