@@ -3,9 +3,14 @@ import { createApp } from './app';
 import { config } from './config';
 import { logger } from './logger';
 import { prisma } from './db/client';
+import { startTaskWorker, stopTaskWorker } from './jobs/taskWorker';
+import { closeQueue } from './jobs/queue';
 
 const app = createApp();
 const server = http.createServer(app);
+
+// Start background task worker
+startTaskWorker();
 
 server.listen(config.port, () => {
   logger.info(`🚀 Coding Harness Backend listening on port ${config.port}`);
@@ -21,10 +26,12 @@ async function handleShutdown(signal: string) {
     logger.info('HTTP server closed.');
 
     try {
+      await stopTaskWorker();
+      await closeQueue();
       await prisma.$disconnect();
-      logger.info('Database connection disconnected.');
+      logger.info('Background worker, queue, and database disconnected.');
     } catch (err) {
-      logger.error('Error disconnecting database:', err);
+      logger.error('Error during shutdown cleanup:', err);
     }
 
     process.exit(0);

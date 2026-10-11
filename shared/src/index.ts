@@ -98,6 +98,11 @@ export interface HealthCheckResponse {
     latencyMs?: number;
     message?: string;
   };
+  redis?: {
+    connected: boolean;
+    latencyMs?: number;
+    message?: string;
+  };
   memory: {
     rss: string;
     heapTotal: string;
@@ -127,4 +132,23 @@ export interface LoginUserInput {
 export interface AuthResponse {
   user: User;
   token: string;
+}
+
+/**
+ * Job payload submitted to the background task queue (BullMQ).
+ */
+export interface TaskJobData {
+  taskId: string;
+  repoUrl: string;
+  prompt: string;
+  branch?: string;
+  userId?: string | null;
+  zipFilePath?: string;
+}
+
+/**
+ * Detailed Task view including all associated execution sessions.
+ */
+export interface TaskWithSessions extends Task {
+  sessions: Session[];
 }

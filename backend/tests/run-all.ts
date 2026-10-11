@@ -48,7 +48,9 @@ async function main() {
     process.exit(1);
   } else if (!dbOk) {
     // If API passed but DB is offline, exit with 1 to indicate DB dependency needed
-    console.log('👉 To run full database tests, ensure Docker Desktop is running and run: npm run docker:up\n');
+    console.log(
+      '👉 To run full database tests, ensure Docker Desktop is running and run: npm run docker:up\n',
+    );
     process.exit(1);
   } else {
     process.exit(0);

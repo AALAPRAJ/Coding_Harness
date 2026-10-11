@@ -37,7 +37,9 @@ export async function runApiTests(): Promise<boolean> {
       'Expected status to be ok or degraded',
     );
     assert.ok(healthBody.data.memory?.rss, 'Expected memory statistics');
-    const dbStatus = healthBody.data.database.connected ? 'DB Online' : 'DB Offline (Degraded Mode)';
+    const dbStatus = healthBody.data.database.connected
+      ? 'DB Online'
+      : 'DB Offline (Degraded Mode)';
     console.log(`✓ OK (Status: 200, Health: ${healthBody.data.status}, ${dbStatus})`);
 
     // 2. Versioned /api/health endpoint

@@ -34,12 +34,16 @@ async function runDiagnostics() {
   // 1. Node.js Version
   const nodeVersion = process.version;
   const major = parseInt(nodeVersion.replace('v', '').split('.')[0], 10);
-  console.log(`[1] Node.js Version: ${nodeVersion} ${major >= 18 ? '✅ (Compatible)' : '❌ (Requires Node >= 18)'}`);
+  console.log(
+    `[1] Node.js Version: ${nodeVersion} ${major >= 18 ? '✅ (Compatible)' : '❌ (Requires Node >= 18)'}`,
+  );
 
   // 2. .env Configuration File
   const envPath = path.resolve(process.cwd(), '.env');
   const envExists = fs.existsSync(envPath);
-  console.log(`[2] Backend .env file: ${envExists ? '✅ (Found)' : '⚠️ (Missing backend/.env - copy from .env.example)'}`);
+  console.log(
+    `[2] Backend .env file: ${envExists ? '✅ (Found)' : '⚠️ (Missing backend/.env - copy from .env.example)'}`,
+  );
 
   // 3. Docker CLI Check
   let dockerCliOk = false;
@@ -65,11 +69,15 @@ async function runDiagnostics() {
 
   // 5. PostgreSQL Port (5432)
   const pgPortOpen = await checkPort(5432);
-  console.log(`[5] PostgreSQL Port (5432): ${pgPortOpen ? '✅ Listening' : '⚠️ Offline (Run: npm run docker:up)'}`);
+  console.log(
+    `[5] PostgreSQL Port (5432): ${pgPortOpen ? '✅ Listening' : '⚠️ Offline (Run: npm run docker:up)'}`,
+  );
 
   // 6. Redis Port (6379)
   const redisPortOpen = await checkPort(6379);
-  console.log(`[6] Redis Port (6379): ${redisPortOpen ? '✅ Listening' : '⚠️ Offline (Run: npm run docker:up)'}`);
+  console.log(
+    `[6] Redis Port (6379): ${redisPortOpen ? '✅ Listening' : '⚠️ Offline (Run: npm run docker:up)'}`,
+  );
 
   console.log('\n====================================================');
   console.log('                 DIAGNOSTIC SUMMARY                 ');
@@ -79,7 +87,8 @@ async function runDiagnostics() {
   } else {
     console.log('ℹ️ Next steps for local setup:');
     if (!dockerDaemonOk) console.log('   - Start the Docker Desktop application.');
-    if (!pgPortOpen || !redisPortOpen) console.log('   - Launch containers using: npm run docker:up');
+    if (!pgPortOpen || !redisPortOpen)
+      console.log('   - Launch containers using: npm run docker:up');
     console.log('');
   }
 }
