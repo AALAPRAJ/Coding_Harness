@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { GitPullRequest, Download, Copy, Check, FileCode, CheckCircle } from 'lucide-react';
+import { TaskStatus } from '@coding-harness/shared';
 
 interface DiffViewerProps {
   diff: string;
   taskId: string;
+  status: TaskStatus;
 }
 
-export function DiffViewer({ diff, taskId }: DiffViewerProps) {
+export function DiffViewer({ diff, taskId, status }: DiffViewerProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -31,9 +33,15 @@ export function DiffViewer({ diff, taskId }: DiffViewerProps) {
     return (
       <div className="glass-panel rounded-2xl p-8 border border-dark-border text-center">
         <FileCode className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-        <h4 className="text-sm font-semibold text-gray-300">No Git Diff Available Yet</h4>
+        <h4 className="text-sm font-semibold text-gray-300">
+          {status === TaskStatus.COMPLETED ? 'No Code Changes' : 'No Git Diff Available'}
+        </h4>
         <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-          The AI agent has not produced code changes yet or is currently planning its modifications.
+          {status === TaskStatus.COMPLETED
+            ? 'This task finished without changes to the repository.'
+            : status === TaskStatus.FAILED
+              ? 'No patch was recorded for this failed task.'
+              : 'A diff will appear here if the agent changes files.'}
         </p>
       </div>
     );

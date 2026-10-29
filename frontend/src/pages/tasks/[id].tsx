@@ -7,6 +7,7 @@ import { subscribeToTask } from '../../services/socket';
 import { LiveTerminal } from '../../components/LiveTerminal';
 import { AgentStateCard } from '../../components/AgentStateCard';
 import { DiffViewer } from '../../components/DiffViewer';
+import { TaskResult } from '../../components/TaskResult';
 import { TaskWithSessions, TaskStatus, AgentStepLog } from '@coding-harness/shared';
 
 export default function TaskExecutionView() {
@@ -18,6 +19,7 @@ export default function TaskExecutionView() {
   const [logs, setLogs] = useState<string>('');
   const [status, setStatus] = useState<TaskStatus>(TaskStatus.PENDING);
   const [diff, setDiff] = useState<string>('');
+  const [summary, setSummary] = useState<string>('');
   const [latestStep, setLatestStep] = useState<AgentStepLog | undefined>(undefined);
   const [iterations, setIterations] = useState<number>(0);
   const [toolCallsCount, setToolCallsCount] = useState<number>(0);
@@ -35,6 +37,7 @@ export default function TaskExecutionView() {
 
       // Extract existing session logs if available
       const latestSession = data.sessions && data.sessions[0];
+      setSummary(latestSession?.resultSummary || '');
       if (latestSession) {
         if (latestSession.logs) {
           setLogs(latestSession.logs);
@@ -66,6 +69,8 @@ export default function TaskExecutionView() {
       },
       onStatus: (newStatus) => {
         setStatus(newStatus);
+        if (newStatus === TaskStatus.COMPLETED || newStatus === TaskStatus.FAILED)
+          fetchTaskDetails();
       },
       onStep: (stepLog) => {
         setLatestStep(stepLog);
@@ -202,7 +207,10 @@ export default function TaskExecutionView() {
             repoUrl={task?.repoUrl}
           />
 
-          <DiffViewer diff={diff} taskId={taskId} />
+          {status === TaskStatus.COMPLETED && summary && (
+            <TaskResult summary={summary} prompt={task?.prompt} />
+          )}
+          <DiffViewer diff={diff} taskId={taskId} status={status} />
         </div>
       </div>
     </div>
