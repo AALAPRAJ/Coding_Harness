@@ -190,7 +190,7 @@ export class FileSystemTools {
         }
 
         const fullEntryPath = path.join(currentDir, entry.name);
-        const relFromWorkspace = path.relative(rootWorkspace, fullEntryPath);
+        const relFromWorkspace = path.relative(rootWorkspace, fullEntryPath).replace(/\\/g, '/');
 
         if (entry.isDirectory()) {
           items.push({
@@ -281,7 +281,7 @@ export class FileSystemTools {
 
             const content = await fs.readFile(fullEntryPath, 'utf-8');
             const lines = content.split('\n');
-            const relPath = path.relative(rootWorkspace, fullEntryPath);
+            const relPath = path.relative(rootWorkspace, fullEntryPath).replace(/\\/g, '/');
 
             for (let i = 0; i < lines.length; i++) {
               if (matcher.test(lines[i])) {
