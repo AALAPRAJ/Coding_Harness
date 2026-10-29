@@ -115,7 +115,11 @@ export class GitService {
   /**
    * Produces a unified Git diff showing all modifications made compared to HEAD.
    */
-  static async getGitDiff(repoDir: string): Promise<string> {
+  static async getHeadCommit(repoDir: string): Promise<string> {
+    return simpleGit(repoDir).revparse(['HEAD']);
+  }
+
+  static async getGitDiff(repoDir: string, baseCommit?: string): Promise<string> {
     const isRepo = await this.isGitRepo(repoDir);
     if (!isRepo) {
       return '';
@@ -124,15 +128,17 @@ export class GitService {
     const git = simpleGit(repoDir);
 
     try {
-      // First try diffing against HEAD
-      const diff = await git.diff(['HEAD']);
+      // Include new files in the patch without staging their contents.
+      await git.raw(['add', '--intent-to-add', '--all']);
+      const diff = await git.diff([baseCommit || 'HEAD', '--binary']);
       if (diff && diff.trim().length > 0) {
         return diff;
       }
 
       // If HEAD has no diff, check working tree vs index
       return await git.diff();
-    } catch {
+    } catch (error) {
+      if (baseCommit) throw error;
       // Fallback to basic diff
       return await git.diff();
     }
