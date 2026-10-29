@@ -6,6 +6,8 @@ import { GitService } from '../services/gitService';
 import { StorageService } from '../services/storageService';
 import { DockerManager } from '../sandbox/dockerManager';
 import { AgentLoop } from '../agent/agentLoop';
+import { runClaudeCode } from '../agent/claudeCodeRunner';
+import { config } from '../config';
 import { logger } from '../logger';
 
 import { SocketServer } from '../websocket/socketServer';
@@ -53,7 +55,7 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
 
   try {
     // 3. Prepare clean workspace directory
-    await appendLogs('Preparing isolated task workspace...');
+    await appendLogs('Preparing task workspace...');
     const workspacePath = await GitService.prepareWorkspace(taskId);
 
     // 4. Source setup: Repository clone OR Zip archive extraction
@@ -73,49 +75,60 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
       throw new Error('Neither a repoUrl nor a zipFilePath was provided for this task.');
     }
 
+    const baseCommit = await GitService.getHeadCommit(workspacePath);
+
     // 5. Docker Sandbox Container lifecycle (Phase 3 Tool Execution Layer)
     let containerInfo: { containerId: string } | null = null;
     try {
-      const dockerStatus = await DockerManager.checkDockerConnection();
-      if (dockerStatus.connected) {
-        await appendLogs(
-          `Docker daemon connected (v${dockerStatus.version || 'unknown'}). Spinning up isolated sandbox container...`,
-        );
-        containerInfo = await DockerManager.createAndStartContainer(taskId, workspacePath);
-        await appendLogs(
-          `Docker sandbox container initialized: ${containerInfo.containerId.substring(0, 12)}`,
-        );
+      if (config.aiProvider === 'claude-code') {
+        await appendLogs('Claude Code will run on the demo VM. Use only trusted repositories.');
       } else {
-        await appendLogs(
-          `Notice: Docker daemon unreachable (${dockerStatus.message}). Running in container-less filesystem mode.`,
-        );
+        const dockerStatus = await DockerManager.checkDockerConnection();
+        if (dockerStatus.connected) {
+          await appendLogs(
+            `Docker daemon connected (v${dockerStatus.version || 'unknown'}). Spinning up isolated sandbox container...`,
+          );
+          containerInfo = await DockerManager.createAndStartContainer(taskId, workspacePath);
+          await appendLogs(
+            `Docker sandbox container initialized: ${containerInfo.containerId.substring(0, 12)}`,
+          );
+        } else {
+          await appendLogs(
+            `Notice: Docker daemon unreachable (${dockerStatus.message}). Running in container-less filesystem mode.`,
+          );
+        }
       }
 
       // 6. AI Agent Autonomous Execution Loop (Phase 4)
       await appendLogs('Starting autonomous AI Agent reasoning and tool execution loop...');
-      const agentResult = await AgentLoop.run({
-        taskId,
-        workspacePath,
-        prompt,
-        containerId: containerInfo?.containerId,
-        onProgress: async (logLine, stepLog) => {
-          await appendLogs(logLine);
-          if (stepLog) {
-            SocketServer.emitTaskStep(taskId, stepLog);
-          }
-        },
-      });
+      const agentResult =
+        config.aiProvider === 'claude-code'
+          ? await runClaudeCode({
+              workspacePath,
+              prompt,
+              onProgress: appendLogs,
+            })
+          : await AgentLoop.run({
+              taskId,
+              workspacePath,
+              prompt,
+              containerId: containerInfo?.containerId,
+              onProgress: async (logLine, stepLog) => {
+                await appendLogs(logLine);
+                if (stepLog) {
+                  SocketServer.emitTaskStep(taskId, stepLog);
+                }
+              },
+            });
 
       if (!agentResult.success && agentResult.error) {
         throw new Error(`AI Agent execution halted with error: ${agentResult.error}`);
       }
 
-      await appendLogs(
-        `Agent loop finished successfully in ${agentResult.iterations} iteration(s) with ${agentResult.totalToolCalls} tool execution(s).`,
-      );
+      await appendLogs('Agent execution finished successfully.');
 
       // 7. Capture final diff
-      const diff = agentResult.finalDiff || (await GitService.getGitDiff(workspacePath));
+      const diff = await GitService.getGitDiff(workspacePath, baseCommit);
       if (diff) {
         SocketServer.emitTaskDiff(taskId, diff);
       }
@@ -128,6 +141,7 @@ export async function processTaskJob(job: Job<TaskJobData>): Promise<void> {
         where: { id: session.id },
         data: {
           resultDiff: diff || null,
+          resultSummary: agentResult.summary || null,
           finishedAt: finishTime,
         },
       });
@@ -182,7 +196,7 @@ export function createTaskWorker(): Worker<TaskJobData> {
     },
     {
       connection: redisConnectionOptions,
-      concurrency: 2, // Process up to 2 tasks concurrently
+      concurrency: config.aiProvider === 'claude-code' ? 1 : 2,
     },
   );
 

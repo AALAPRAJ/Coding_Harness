@@ -17,7 +17,7 @@ SocketServer.init(server);
 // Start background task worker
 startTaskWorker();
 
-server.listen(config.port, () => {
+server.listen(config.port, process.env.HOST || '0.0.0.0', () => {
   logger.info(`🚀 Coding Harness Backend listening on port ${config.port}`);
   logger.info(`🌐 Environment: ${config.nodeEnv}`);
   logger.info(`🩺 Health check available at: http://localhost:${config.port}/health`);

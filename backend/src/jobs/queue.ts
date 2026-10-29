@@ -82,7 +82,7 @@ export async function checkRedisConnection(): Promise<{
 export const taskQueue = new Queue<TaskJobData>(TASK_QUEUE_NAME, {
   connection: redisClient,
   defaultJobOptions: {
-    attempts: 3,
+    attempts: config.aiProvider === 'claude-code' ? 1 : 3,
     backoff: {
       type: 'exponential',
       delay: 2000,

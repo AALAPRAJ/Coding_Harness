@@ -6,6 +6,8 @@ import { AppError } from '../middlewares/errorHandler';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { GitService } from '../services/gitService';
 import { logger } from '../logger';
+import { config } from '../config';
+import { extractLegacySummary } from '../agent/legacySummary';
 
 /**
  * Submit a new automated coding task.
@@ -30,6 +32,30 @@ export async function createTask(
         400,
         'INVALID_INPUT',
       );
+    }
+
+    if (config.aiProvider === 'claude-code') {
+      if (uploadedFile || typeof repoUrl !== 'string') {
+        throw new AppError('This demo accepts public GitHub URLs only', 400, 'INVALID_INPUT');
+      }
+      let url: URL;
+      try {
+        url = new URL(repoUrl);
+      } catch {
+        throw new AppError('Invalid GitHub URL', 400, 'INVALID_INPUT');
+      }
+      if (
+        url.protocol !== 'https:' ||
+        url.hostname !== 'github.com' ||
+        url.port ||
+        url.username ||
+        url.password ||
+        url.search ||
+        url.hash ||
+        !/^\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(url.pathname)
+      ) {
+        throw new AppError('Use a public HTTPS GitHub repository URL', 400, 'INVALID_INPUT');
+      }
     }
 
     const taskRepoIdentifier = repoUrl
@@ -58,7 +84,8 @@ export async function createTask(
       });
     } catch (queueError) {
       logger.warn(`Queue dispatch warning for task ${task.id}:`, queueError);
-      // Task remains recorded in database as PENDING even if Redis queue is offline
+      await prisma.task.update({ where: { id: task.id }, data: { status: TaskStatus.FAILED } });
+      throw new AppError('Could not enqueue task', 503, 'QUEUE_UNAVAILABLE');
     }
 
     const response: ApiResponse<Task> = {
@@ -100,7 +127,15 @@ export async function getTaskById(
 
     const response: ApiResponse<TaskWithSessions> = {
       success: true,
-      data: task as unknown as TaskWithSessions,
+      data: {
+        ...task,
+        sessions: task.sessions.map((session) => ({
+          ...session,
+          resultSummary:
+            session.resultSummary ||
+            (task.status === TaskStatus.COMPLETED ? extractLegacySummary(session.logs) : null),
+        })),
+      } as unknown as TaskWithSessions,
       timestamp: new Date().toISOString(),
     };
 
