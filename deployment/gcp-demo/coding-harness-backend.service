@@ -1,0 +1,20 @@
+[Unit]
+Description=Coding Harness backend demo
+After=network-online.target postgresql.service redis-server.service coding-harness-gateway.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=harness
+Group=harness
+WorkingDirectory=/opt/coding-harness/backend
+EnvironmentFile=/etc/coding-harness.env
+Environment=HOME=/var/lib/coding-harness
+Environment=GIT_TERMINAL_PROMPT=0
+Environment=PATH=/var/lib/coding-harness/.local/bin:/opt/coding-harness-node/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/coding-harness-node/bin/node dist/server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

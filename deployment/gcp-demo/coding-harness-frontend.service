@@ -1,0 +1,19 @@
+[Unit]
+Description=Coding Harness frontend demo
+After=network-online.target coding-harness-backend.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=harness
+Group=harness
+WorkingDirectory=/opt/coding-harness/frontend
+Environment=NODE_ENV=production
+Environment=HOME=/var/lib/coding-harness
+Environment=PATH=/opt/coding-harness-node/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/coding-harness-node/bin/node /opt/coding-harness/node_modules/next/dist/bin/next start -p 3000 -H 127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

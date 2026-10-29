@@ -1,0 +1,19 @@
+[Unit]
+Description=Local Claude Code to Vertex Gemini compatibility gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=harness
+Group=harness
+WorkingDirectory=/opt/coding-harness
+EnvironmentFile=/etc/coding-harness-gateway.env
+UnsetEnvironment=DATABASE_URL
+Environment=HOME=/var/lib/coding-harness
+ExecStart=/opt/coding-harness-litellm/bin/litellm --config /opt/coding-harness/deployment/gcp-demo/litellm.yaml --host 127.0.0.1 --port 4010 --num_workers 1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
