@@ -1,6 +1,6 @@
 import { ApiResponse, Task, TaskWithSessions, HealthCheckResponse } from '@coding-harness/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export interface SubmitTaskPayload {
   repoUrl?: string;
@@ -9,7 +9,24 @@ export interface SubmitTaskPayload {
   file?: File;
 }
 
+export interface ProjectCost {
+  status: 'available' | 'pending' | 'unavailable';
+  currency?: string;
+  grossCost?: number;
+  netCost?: number;
+  exportedAt?: string;
+  latestUsage?: string;
+  checkedAt: string;
+  stale?: boolean;
+}
+
 export class ApiService {
+  static async getProjectCost(): Promise<ProjectCost> {
+    const res = await fetch(`${API_BASE_URL}/api/project-cost`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Could not load project cost');
+    const json: ApiResponse<ProjectCost> = await res.json();
+    return json.data;
+  }
   /**
    * Fetches backend system health metrics and database/redis/docker status.
    */
