@@ -74,9 +74,14 @@ export function TaskForm() {
           <span>Submit Coding Task</span>
         </h2>
         <p className="text-sm text-gray-400 mt-1">
-          Provide your repository and instructions. The AI agent will clone the workspace, run
-          sandboxed tests, and generate a verified Git diff.
+          Provide your repository and instructions. The agent will work in a cloned workspace and
+          produce a Git diff.
         </p>
+        {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
+          <p className="text-xs text-amber-300 mt-2">
+            Use only trusted public GitHub repositories. The agent can run code on the demo VM.
+          </p>
+        )}
       </div>
 
       {errorMessage && (
@@ -105,18 +110,20 @@ export function TaskForm() {
               <Link2 className="w-4 h-4" />
               <span>Git URL</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setSourceType('zip')}
-              className={`flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-                sourceType === 'zip'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                  : 'text-gray-400 hover:text-white hover:bg-dark-card'
-              }`}
-            >
-              <FolderArchive className="w-4 h-4" />
-              <span>Upload ZIP Archive</span>
-            </button>
+            {process.env.NEXT_PUBLIC_DEMO_MODE !== 'true' && (
+              <button
+                type="button"
+                onClick={() => setSourceType('zip')}
+                className={`flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                  sourceType === 'zip'
+                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
+                    : 'text-gray-400 hover:text-white hover:bg-dark-card'
+                }`}
+              >
+                <FolderArchive className="w-4 h-4" />
+                <span>Upload ZIP Archive</span>
+              </button>
+            )}
           </div>
         </div>
 

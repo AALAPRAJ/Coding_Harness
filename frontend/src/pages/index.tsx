@@ -11,7 +11,6 @@ import {
   GitBranch,
   ArrowRight,
   History,
-  Shield,
   Cpu,
   RefreshCw,
 } from 'lucide-react';
@@ -75,16 +74,12 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Hero Header */}
       <div className="text-center max-w-3xl mx-auto mb-10">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-medium mb-4">
-          <Shield className="w-3.5 h-3.5" />
-          <span>Isolated Docker Sandbox &bull; Verified Git Diffs</span>
-        </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
           Autonomous AI Developer for Your Codebase
         </h1>
         <p className="mt-4 text-base sm:text-lg text-gray-400 leading-relaxed">
-          Submit any task, issue, or feature request. The system clones your repository into an
-          isolated sandbox, edits files, executes real tests, and verifies the diff until it works.
+          Submit a task, issue, or feature request. The agent works on a cloned repository and
+          returns its changes as a Git diff. Review the output and test results before applying it.
         </p>
       </div>
 
