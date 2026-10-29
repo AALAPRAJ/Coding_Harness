@@ -73,6 +73,7 @@ export class AgentLoop {
     let iteration = 0;
     let isCompleted = false;
     let loopError: string | undefined;
+    let finalAnswer: string | undefined;
 
     // 3. Autonomous Iteration Loop
     while (iteration < maxIterations && !isCompleted) {
@@ -104,6 +105,7 @@ export class AgentLoop {
 
         // If no tool calls were requested and model responded with content, agent signals task complete
         if (parsedCalls.length === 0) {
+          finalAnswer = response.content || undefined;
           await notify('Agent determined that no further tool calls are required. Task complete.');
           isCompleted = true;
           steps.push({
@@ -225,6 +227,7 @@ export class AgentLoop {
       totalToolCalls,
       steps,
       finalDiff: finalDiff || undefined,
+      summary: finalAnswer,
       error: loopError,
     };
   }

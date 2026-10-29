@@ -46,6 +46,7 @@ export interface Session {
   taskId: string;
   logs: string;
   resultDiff?: string | null;
+  resultSummary?: string | null;
   startedAt: Date | string;
   finishedAt?: Date | string | null;
 }
@@ -295,5 +296,6 @@ export interface AgentLoopResult {
   totalToolCalls: number;
   steps: AgentStepLog[];
   finalDiff?: string;
+  summary?: string;
   error?: string;
 }
